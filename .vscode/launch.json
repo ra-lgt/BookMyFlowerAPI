@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Uvicorn with --reload",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/ajay/miniconda3/envs/book_flower/bin/uvicorn",  // Adjust path to your uvicorn executable
+            "args": [
+                "Api:app",   // Replace 'main:app' with your ASGI app location (file and instance)
+                "--reload"
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "envFile": "${workspaceFolder}/.env"  // Optional: If you use a .env file for credentials
+        }
+    ]
+}
