@@ -1,0 +1,66 @@
+{
+    "ID": 239944264,
+    "name": "Book My Flowers",
+    "description": "Gifting Made Easy",
+    "URL": "https:\/\/bookmyflowers.co",
+    "jetpack": true,
+    "jetpack_connection": true,
+    "subscribers_count": 1,
+    "icon": {
+        "img": "https:\/\/bookmyflowers.co\/wp-content\/uploads\/2024\/10\/cropped-site-icon.png",
+        "ico": "https:\/\/bookmyflowers.co\/wp-content\/uploads\/2024\/10\/cropped-site-icon-32x32.png"
+    },
+    "logo": {
+        "id": 0,
+        "sizes": [],
+        "url": ""
+    },
+    "is_following": false,
+    "organization_id": 0,
+    "meta": {
+        "links": {
+            "self": "https:\/\/public-api.wordpress.com\/rest\/v1.1\/sites\/239944264",
+            "help": "https:\/\/public-api.wordpress.com\/rest\/v1.1\/sites\/239944264\/help",
+            "posts": "https:\/\/public-api.wordpress.com\/rest\/v1.1\/sites\/239944264\/posts\/",
+            "comments": "https:\/\/public-api.wordpress.com\/rest\/v1.1\/sites\/239944264\/comments\/",
+            "xmlrpc": "https:\/\/bookmyflowers.co\/xmlrpc.php"
+        }
+    },
+    "launch_status": "",
+    "is_fse_active": false,
+    "is_fse_eligible": false,
+    "is_core_site_editor_enabled": false,
+    "is_wpcom_atomic": false,
+    "is_wpcom_staging_site": false,
+    "is_deleted": false,
+    "is_a4a_client": false,
+    "is_a4a_dev_site": false,
+    "site_migration": null,
+    "was_ecommerce_trial": false,
+    "was_migration_trial": false,
+    "was_hosting_trial": false,
+    "was_upgraded_from_trial": false
+}
+
+curl -X POST https://public-api.wordpress.com/oauth2/token \
+  -d "client_id=111835" \
+  -d "client_secret=OWw2078kGHpdpacibp5fT0vk4yNvl1o4P7kk3LQDBPhjNNzmEzJlilQEt71mdBBc" \
+  -d "redirect_uri=https://bookmyflowers.co" \
+  -d "code=7cpA78PKs3" \
+  -d "grant_type=authorization_code"
+
+  {"access_token":"r@OcQR)oWqrM7rDjLwrnWkgYvVOCl8juS1AmRqPi07890dFwrs$B)vtB1NZGDG8P","token_type":"bearer","blog_id":"239944264","blog_url":"https:\/\/bookmyflowers.co","scope":""}(base) ajay@ajay-8700G:~$ 
+  curl -H 'Authorization: Bearer r@OcQR)oWqrM7rDjLwrnWkgYvVOCl8juS1AmRqPi07890dFwrs$B)vtB1NZGDG8P' \
+  'https://public-api.wordpress.com/rest/v1/me/'
+
+
+  curl -X GET \
+  -H "Authorization: r@OcQR)oWqrM7rDjLwrnWkgYvVOCl8juS1AmRqPi07890dFwrs$B)vtB1NZGDG8P" \
+  "https://public-api.wordpress.com/oauth2/token"
+
+
+  https://public-api.wordpress.com/oauth2/authorize?client_id=111835&redirect_uri=https://bookmyflowers.co&response_type=code&scope=stats:read%20sites:read
+
+  curl -X GET \
+  -H "Authorization: r@OcQR)oWqrM7rDjLwrnWkgYvVOCl8juS1AmRqPi07890dFwrs$B)vtB1NZGDG8P" \
+  "https://public-api.wordpress.com/rest/v1.1/sites/239944264/stats"

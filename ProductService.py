@@ -3,17 +3,39 @@ from EnvirmentService import EnvirmentService
 from datetime import datetime, timedelta
 
 class ProductService(EnvirmentService):
-    def get_all_products(self, params={}, return_type=None):
-        all_products = None
+    def __init__(self):
+        super().__init__()
 
-        if params:
-            all_products = requests.get(self.urls["products_url"], auth=self.auth, params=params)
-        else:
-            all_products = requests.get(self.urls["products_url"], auth=self.auth)
+    def get_all_products(self,params={}):
+        all_products = []
+        page = 1
+        while True:
+            current_params = params.copy()
+            current_params.update({
+                "page": page,
+                "per_page": 100  
+            })
 
-        if all_products.status_code == 200:
+            response = requests.get(self.urls["products_url"], auth=self.auth, params=current_params)
+            if response.status_code == 200:
+                products = response.json()
+                all_products.extend(products)
+                
+                total_pages = int(response.headers.get('X-WP-TotalPages', 1))
+                if page >= total_pages:
+                    break
+                else:
+                    page += 1
+            else:
+                return []
+
+        return all_products
+
+    def get_all_products_count_stat(self, params={}, return_type=None):
+            
+
             if return_type == "count":
-                current_week_total = int(all_products.headers.get('X-WP-Total', 0))
+                current_week_total = len(self.get_all_products(params))
 
                 today = datetime.utcnow().date()
                 start_of_week = today - timedelta(days=today.weekday())
@@ -25,39 +47,23 @@ class ProductService(EnvirmentService):
                     "before": end_of_last_week.isoformat() + "T23:59:59"
                 }
 
-                last_week_response = requests.get(
-                    self.urls["products_url"], auth=self.auth, params=last_week_params
+
+                last_week_total = len(self.get_all_products(last_week_params))
+                percentage_change = (
+                    ((current_week_total - last_week_total) / last_week_total) * 100
+                    if last_week_total > 0 else None
                 )
 
-                if last_week_response.status_code == 200:
-                    last_week_total = int(last_week_response.headers.get('X-WP-Total', 0))
-                    percentage_change = (
-                        ((current_week_total - last_week_total) / last_week_total) * 100
-                        if last_week_total > 0 else None
-                    )
-
-                    return {
-                        "data": {
-                            "current_week_total": current_week_total,
-                            "last_week_total": last_week_total,
-                            "percentage_change": f"{percentage_change:+.2f}%" if percentage_change is not None else "N/A"
-                        },
-                        "status_code": 200
-                    }
-                else:
-                    return {
-                        "data": "error retrieving last week data",
-                        "status_code": last_week_response.status_code
-                    }
+                return {
+                    "data": {
+                        "current_week_total": current_week_total,
+                        "last_week_total": last_week_total,
+                        "percentage_change": f"{percentage_change:+.2f}%" if percentage_change is not None else "N/A"
+                    },
+                    "status_code": 200
+                }
 
             return {
-                "data": all_products.json(),
+                "data": [],
                 "status_code": 200
             }
-
-        return {
-            "data": "error",
-            "status_code": all_products.status_code
-        }
-
-

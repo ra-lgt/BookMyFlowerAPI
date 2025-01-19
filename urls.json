@@ -1,5 +1,8 @@
 {
-    "products_url":"https://bookmyflowers.co/wp-json/wc/v3/products",
-    "orders_url":"https://bookmyflowers.co/wp-json/wc/v3/orders",
-    "customers_url":"https://bookmyflowers.co/wp-json/wc/v3/customers"
+    "products_url": "https://bookmyflowers.co/wp-json/wc/v3/products",
+    "orders_url": "https://bookmyflowers.co/wp-json/wc/v3/orders",
+    "customers_url": "https://bookmyflowers.co/wp-json/wc/v3/customers",
+    "views_url": "https://bookmyflowers.co/wp-json/jetpack/v4/stats",
+    "sales_url": "https://bookmyflowers.co/wp-json/wc/v3/reports/sales"
 }
+

@@ -4,39 +4,58 @@ from datetime import datetime, timedelta
 
 
 class OrderService(EnvirmentService):
+    def __init__(self):
+        super().__init__()
     def get_all_orders(self, params={}, return_type=None):
-        all_orders = None
+            all_orders = []
+            page = 1
 
-        # Make API request to get all orders
-        if params:
-            all_orders = requests.get(self.urls['orders_url'], auth=self.auth, params=params)
-        else:
-            all_orders = requests.get(self.urls['orders_url'], auth=self.auth)
+            while True:
+                current_params = params.copy()
+                current_params.update({
+                    "page": page,
+                    "per_page": 100  
+                })
 
-        if all_orders.status_code == 200:
+                response = requests.get(self.urls['orders_url'], auth=self.auth, params=current_params)
+                if response.status_code == 200:
+                    orders = response.json()
+                    all_orders.extend(orders)
+
+                    total_pages = int(response.headers.get('X-WP-TotalPages', 1))
+                    print(f"Page {page} - Total Orders: {response.headers.get('X-WP-Total')}, Total Pages: {total_pages}")
+
+                    if page >= total_pages:
+                        break
+                    else:
+                        page += 1
+                else:
+                    return {
+                        "data": "Error fetching orders",
+                        "status_code": response.status_code
+                    }
+
             if return_type == "count":
-                current_week_total = int(all_orders.headers.get('X-WP-Total', 0))
+                current_week_total = len(all_orders)
 
                 today = datetime.utcnow().date()
                 start_of_week = today - timedelta(days=today.weekday())
                 end_of_last_week = start_of_week - timedelta(days=1)
                 start_of_last_week = end_of_last_week - timedelta(days=6)
 
-                # Parameters to filter orders by last week
                 last_week_params = {
                     "after": start_of_last_week.isoformat() + "T00:00:00",
                     "before": end_of_last_week.isoformat() + "T23:59:59"
                 }
-                if('status' in params):
-                    last_week_params['status']=params['status']
+                if 'status' in params:
+                    last_week_params['status'] = params['status']
 
-                # Request orders for last week
                 last_week_response = requests.get(
                     self.urls['orders_url'], auth=self.auth, params=last_week_params
                 )
 
                 if last_week_response.status_code == 200:
-                    last_week_total = int(last_week_response.headers.get('X-WP-Total', 0))
+                    last_week_total = len(last_week_response.json())
                     percentage_change = (
                         ((current_week_total - last_week_total) / last_week_total) * 100
                         if last_week_total > 0 else None
@@ -52,16 +71,11 @@ class OrderService(EnvirmentService):
                     }
                 else:
                     return {
-                        "data": "error retrieving last week data",
+                        "data": "Error retrieving last week data",
                         "status_code": last_week_response.status_code
                     }
 
             return {
-                "data": all_orders.json(),
+                "data": all_orders,
                 "status_code": 200
             }
-
-        return {
-            "data": "error",
-            "status_code": all_orders.status_code
-        }
