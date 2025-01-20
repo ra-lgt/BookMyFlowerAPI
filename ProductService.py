@@ -31,10 +31,10 @@ class ProductService(EnvirmentService):
 
         return all_products
 
-    def get_all_products_count_stat(self, params={}, return_type=None):
+    def get_all_products_count_stat(self, params={}, interval_type=None):
             
 
-            if return_type == "count":
+            if interval_type == "count":
                 current_week_total = len(self.get_all_products(params))
 
                 today = datetime.utcnow().date()

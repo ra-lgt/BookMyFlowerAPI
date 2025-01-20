@@ -9,23 +9,27 @@ import pytz
 class SalesService(EnvirmentService):
     def __init__(self):
         super().__init__()
-        self.utc_timezone = pytz.UTC
         
 
     #helper functions
-    def get_all_sales(self,params={}):
+    def get_all_sales(self,params={},url_type="orders_url"):
         all_sales = []
         page = 1
+        sales_response=None
 
         while True:
             current_params = params.copy()
             current_params.update({
-                "status": "completed",
                 "page": page,
-                "per_page": 100  
+                "per_page": 100,
+                "status":"completed"
             })
+            if(url_type=="orders_url"):
+                sales_response = requests.get(self.urls['orders_url'], auth=self.auth, params=current_params)
+            elif(url_type=="revenue_report"):
+                sales_response = requests.get(self.urls['revenue_report'], auth=self.auth, params=current_params)
+                return sales_response.json()
 
-            sales_response = requests.get(self.urls['orders_url'], auth=self.auth, params=current_params)
             if sales_response.status_code == 200:
                 sales_data = sales_response.json()
                 all_sales.extend(sales_data)
@@ -40,19 +44,6 @@ class SalesService(EnvirmentService):
                 return []
         return all_sales
     
-    def get_corresponding_type(self,timestamp,return_type="week",kind="%Y-%m-%dT%H:%M:%SZ"):
-        dt_object=None
-        if(return_type=="week"):
-            dt_object = datetime.fromtimestamp(timestamp)
-
-        if(return_type=="date"):
-            dt_object=datetime.utcfromtimestamp(timestamp)
-            dt_object=self.utc_timezone.localize(dt_object)
-
-        # Get the name of the day (e.g., Monday, Tuesday, etc.)
-        normalized_value = dt_object.strftime(kind)
-        return normalized_value
-    
 
     #main code
     
@@ -65,7 +56,7 @@ class SalesService(EnvirmentService):
 
 
 
-    def get_sales_cost_diff(self, params={}, return_type=None):
+    def get_sales_cost_diff(self, params={}, interval_type=None):
         
         current_week_total_cost = sum([float(order['total']) for order in self.get_all_sales(params)])
 
@@ -120,26 +111,70 @@ class SalesService(EnvirmentService):
         
     
 
-    def get_sales_and_cart_stat(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),return_type="week"):
-        cart_mapping={}
+    def get_sales_and_cart_stat(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),interval_type="week"):
         cursor = self.connection.cursor()
-        cursor.execute("""SELECT session_key,session_value,session_expiry 
+        cursor.execute("""SELECT session_key,session_value,created_at 
                        FROM wpbk_my_flowers24_woocommerce_sessions 
-                       WHERE session_expiry > %s AND session_expiry < %s""", (from_timestamp, to_timestamp))
+                       WHERE created_at > %s AND created_at < %s""", (from_timestamp, to_timestamp))
         sessions = cursor.fetchall()
-        index=0
+        cart_data=[]
+        sales_data=[]
         for session in sessions:
             decrypted_text=decrypt_php(session[1])
             products=decrypted_text.get('product',[])
-            cart_mapping[index]={
+            cart_mapping={
                 'product_count':len(products),
                 'products':products,
-                'timestamp':self.get_corresponding_type(timestamp=session[2],return_type="date",kind="%Y-%m-%dT%H:%M")
+                'timestamp':self.get_corresponding_type(timestamp=session[2],interval_type="date",kind="%Y-%m-%dT%H:%M")
             }
-            index+=1
+            cart_data.append(cart_mapping)
 
-        sales_data=self.get_all_sales(params={
-            "after":self.get_corresponding_type(from_timestamp,return_type="date"),
-            "before":self.get_corresponding_type(to_timestamp,return_type="date")})
-            
+        all_sales=self.get_all_sales(params={
+            "after":self.get_corresponding_type(from_timestamp,interval_type="date"),
+            "before":self.get_corresponding_type(to_timestamp,interval_type="date")})
+
+        for sale in all_sales:
+            sale_mapping={
+                'order_id':sale['id'] if 'id' in sale else -1,
+                'date_created':sale['date_created'] if 'date_created' in sale else "",
+                'total':sale['total'] if 'total' in sale else 0,
+                'products_id':[i['product_id'] for i in sale['line_items']],
+                'products_name':[i['name'] for i in sale['line_items']],
+                'product_prices':[i['total'] for i in sale['line_items']],                
+            }
+            sales_data.append(sale_mapping)
         cursor.close()
+
+        return cart_data,sales_data
+    
+    def get_sales_and_revenue_stat(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),interval_type="week"):
+        params={
+            "after":self.get_corresponding_type(from_timestamp,kind="%Y-%m-%d %H:%M:%S"),
+            "before":self.get_corresponding_type(to_timestamp,kind="%Y-%m-%d %H:%M:%S"),
+            "interval":interval_type
+        }
+        all_sales_stat=self.get_all_sales(params=params,url_type="revenue_report")
+
+        return all_sales_stat
+    
+
+    def get_sales_based_on_country(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),interval_type="week"):
+        params={
+            "after":self.get_corresponding_type(from_timestamp,kind="%Y-%m-%d %H:%M:%S"),
+            "before":self.get_corresponding_type(to_timestamp,kind="%Y-%m-%d %H:%M:%S"),
+            "interval":interval_type
+        }
+        all_sales=self.get_all_sales(params=params)
+
+        country_sales={}
+        state_sales={}
+        for sale in all_sales:
+            if(sale['billing']['country'] not in country_sales):
+                country_sales[sale['billing']['country']]=0
+            country_sales[sale['billing']['country']]+=float(sale['total'])
+
+            if(sale['billing']['state'] not in state_sales):
+                state_sales[sale['billing']['state']]=0
+            state_sales[sale['billing']['state']]+=float(sale['total'])
+
+        return country_sales,state_sales
