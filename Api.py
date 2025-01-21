@@ -1,10 +1,12 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request,Body
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ProductService import ProductService
 from pydantic import BaseModel
 from OrderService import OrderService
 from CustomerService import CustomerService
 from SalesService import SalesService
+from typing import List
 app = FastAPI()
 
 product_service = ProductService()
@@ -26,28 +28,28 @@ class WooCommerce(BaseModel):
 
 
 class TimeModal(BaseModel):
-    from_timestamp:int=0
-    to_timestamp:int=0
+    from_timestamp:str="0"
+    to_timestamp:str="0"
     interval_type:str=""
 
 
-@app.post("/get_all_products")
+@app.get("/get_all_products")
 async def get_all_products(product: WooCommerce):
     all_products = product_service.get_all_products_count_stat(product.params, product.interval_type)
     return all_products
 
 
-@app.post("/get_all_orders")
+@app.get("/get_all_orders")
 async def get_all_orders(order: WooCommerce):
     all_orders = order_service.get_orders_week_diff(order.params, order.interval_type)
     return all_orders
 
-@app.post('/get_all_customers')
-async def get_all_customers(customer: WooCommerce):
-    all_customers = customer_service.get_all_customers(customer.params, customer.interval_type)
+@app.get('/get_all_customers_stat')
+async def get_all_customers_stat(customer: WooCommerce):
+    all_customers = customer_service.get_all_customers_stat(customer.params, customer.interval_type)
     return all_customers
 
-@app.post('/get_sales_cost_diff')
+@app.get('/get_sales_cost_diff')
 async def get_sales_cost_diff(customer: WooCommerce):
     sales_cost_diff = sales_service.get_sales_cost_diff(customer.params, customer.interval_type)
     return sales_cost_diff
@@ -67,34 +69,46 @@ async def get_page_views_and_sales_stat():
     return page_view
 
 
-@app.post('/get_cart_and_sales')
-async def get_cart_and_sales(time_modal:TimeModal):
-    cart_data,sales_data=sales_service.get_sales_and_cart_stat(from_timestamp=time_modal.from_timestamp,to_timestamp=time_modal.to_timestamp,interval_type=time_modal.interval_type)
+@app.get('/get_cart_and_sales')
+async def get_cart_and_sales(from_timestamp:int=0,to_timestamp:int=0,interval_type:str=""):
+    cart_data,sales_data=sales_service.get_sales_and_cart_stat(from_timestamp=from_timestamp,to_timestamp=to_timestamp,interval_type=interval_type)
     return {
         'sales_data':sales_data,
         'cart_data':cart_data
     }
 
 
-@app.post('/get_customer_review')
+@app.get('/get_customer_review')
 async def get_customer_review(customer:TimeModal):
     customer_review=customer_service.get_customer_review(customer.from_timestamp,customer.to_timestamp,customer.interval_type)
     return customer_review
 
 
-@app.post('/get_comp_sales_and_discount')
-async def get_comp_sales_and_discount(time_modal:TimeModal):
-    comp_sales_and_discount=order_service.get_sales_with_and_without_discount(time_modal.from_timestamp,time_modal.to_timestamp,time_modal.interval_type)
+@app.get('/get_comp_sales_and_discount')
+async def get_comp_sales_and_discount(from_timestamp:int=0,to_timestamp:int=0,interval_type:str=""):
+    comp_sales_and_discount=order_service.get_sales_with_and_without_discount(from_timestamp,to_timestamp,interval_type)
     return comp_sales_and_discount
 
 
-@app.post('/get_sales_and_revenue_stat')
-async def get_sales_and_revenue_stat(time_modal:TimeModal):
-    sales_and_revenue_stat=sales_service.get_sales_and_revenue_stat(time_modal.from_timestamp,time_modal.to_timestamp,time_modal.interval_type)
+@app.get('/get_sales_and_revenue_stat')
+async def get_sales_and_revenue_stat(from_timestamp:int=0,to_timestamp:int=0,interval_type:str="month"):
+    sales_and_revenue_stat=sales_service.get_sales_and_revenue_stat(from_timestamp,to_timestamp,interval_type)
     return sales_and_revenue_stat
 
 
-@app.post('/get_sales_based_on_country_stats')
-async def get_sales_based_on_country_stats(time_modal:TimeModal):
-    sales_based_on_country_stats=sales_service.get_sales_based_on_country(time_modal.from_timestamp,time_modal.to_timestamp,time_modal.interval_type)
+@app.get('/get_sales_based_on_country_stats')
+async def get_sales_based_on_country_stats(from_timestamp:int=0,to_timestamp:int=0,interval_type:str=""):
+    sales_based_on_country_stats=sales_service.get_sales_based_on_country(from_timestamp,to_timestamp,interval_type)
     return sales_based_on_country_stats
+
+
+@app.get('/get_sales_based_products')
+async def  get_sales_based_products(from_timestamp:int=0,to_timestamp:int=0,sort_by:str="asc",limit:int=10):
+    sales_based_products=order_service.sort_sales_based_products(from_timestamp,to_timestamp,sort_by,limit)
+    return JSONResponse(content=sales_based_products)
+
+
+@app.post('/get_product_details_using_id')
+async def get_product_details_using_id(product_id_list: List[int] = Body(...)):
+    product_details=product_service.get_product_details_using_id(product_id_list)
+    return product_details

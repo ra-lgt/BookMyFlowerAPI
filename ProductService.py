@@ -67,3 +67,10 @@ class ProductService(EnvirmentService):
                 "data": [],
                 "status_code": 200
             }
+    
+    def get_product_details_using_id(self,product_id_list):
+        params={
+            'include[]':product_id_list
+        }
+        product_details=self.get_all_products(params)
+        return product_details

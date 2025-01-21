@@ -1,7 +1,7 @@
 import requests
 from EnvirmentService import EnvirmentService
 from datetime import datetime, timedelta
-
+import json
 
 class OrderService(EnvirmentService):
     def __init__(self):
@@ -80,3 +80,20 @@ class OrderService(EnvirmentService):
         all_orders=self.get_all_orders(params=params)
 
         return all_orders
+    
+
+    def sort_sales_based_products(self,from_timestamp,to_timestamp,sort_by="asc",limit=10):
+        cursor = self.connection.cursor()
+        cursor.execute("""SELECT id,status,order_id,product_id,SUM(product_gross_revenue) AS total_sold FROM wpbk_my_flowers24_wc_orders
+                       INNER JOIN wpbk_my_flowers24_wc_order_product_lookup ON wpbk_my_flowers24_wc_orders.id=wpbk_my_flowers24_wc_order_product_lookup.order_id
+                       WHERE date_created > %s AND date_created < %s
+                       AND status='wc-completed'
+                       GROUP BY product_id
+                       ORDER BY total_sold {}
+                       LIMIT %s
+                       """.format(sort_by), (self.get_corresponding_type(from_timestamp,kind="%Y-%m-%d %H:%M:%S"),self.get_corresponding_type(to_timestamp,kind="%Y-%m-%d %H:%M:%S"),limit))
+        sales_data = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]  # Get column names
+        sales_data_dict = [dict(zip(columns, row)) for row in sales_data]
+        sales_data_json = json.dumps(sales_data_dict)
+        return sales_data_json

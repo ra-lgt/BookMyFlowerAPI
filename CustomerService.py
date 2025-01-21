@@ -7,7 +7,7 @@ class CustomerService(EnvirmentService):
     def __init__(self):
         super().__init__()
 
-    def get_all_customers(self, params={}, interval_type=None):
+    def get_all_customers(self,params={}):
         all_customers = []
         page = 1
 
@@ -34,13 +34,15 @@ class CustomerService(EnvirmentService):
                 else:
                     page += 1
             else:
-                return {
-                    "data": "Error fetching customers",
-                    "status_code": response.status_code
-                }
+                return []
+        return all_customers
+
+
+    def get_all_customers_stat(self, params={}, interval_type=None):
+        
 
         if interval_type == "count":
-            current_week_total = len(all_customers)
+            current_week_total = len(self.get_all_customers(params))
 
             today = datetime.utcnow().date()
             start_of_week = today - timedelta(days=today.weekday())
@@ -54,9 +56,7 @@ class CustomerService(EnvirmentService):
             }
 
             # Request customers for last week
-            last_week_response = requests.get(
-                self.urls['customers_url'], auth=self.auth, params=last_week_params
-            )
+            last_week_response = self.get_all_customers(last_week_params)
 
             if last_week_response.status_code == 200:
                 last_week_total = len(last_week_response.json())
@@ -80,7 +80,7 @@ class CustomerService(EnvirmentService):
                 }
 
         return {
-            "data": all_customers,
+            "data": [],
             "status_code": 200
         }
     
