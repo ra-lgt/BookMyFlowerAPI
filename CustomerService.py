@@ -85,11 +85,11 @@ class CustomerService(EnvirmentService):
         }
     
     def get_customer_review(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),interval_type="week"):
-         cursor = self.connection.cursor()
-         cursor.execute("""SELECT meta.comment_id,meta_key,meta_value,comment_author,comment_author_email,comment_date FROM wpbk_my_flowers24_commentmeta AS meta 
-                    INNER JOIN wpbk_my_flowers24_comments ON meta.comment_id=wpbk_my_flowers24_comments.comment_ID
-                        WHERE meta_key='rating' AND
-                        comment_date > %s AND comment_date < %s""", (self.get_corresponding_type(from_timestamp,kind="%Y-%m-%d %H:%M:%S"),self.get_corresponding_type(to_timestamp,kind="%Y-%m-%d %H:%M:%S")))
-         
-         comments=cursor.fetchall()
-         return comments
+        cursor = self.connection.cursor()
+        cursor.execute("""SELECT meta.comment_id,meta_key,meta_value,comment_author,comment_author_email,comment_date FROM wpbk_my_flowers24_commentmeta AS meta 
+                INNER JOIN wpbk_my_flowers24_comments ON meta.comment_id=wpbk_my_flowers24_comments.comment_ID
+                    WHERE meta_key='rating' AND
+                    comment_date > %s AND comment_date < %s""", (self.get_corresponding_type(from_timestamp,kind="%Y-%m-%d %H:%M:%S"),self.get_corresponding_type(to_timestamp,kind="%Y-%m-%d %H:%M:%S")))
+        
+        comments=cursor.fetchall()
+        return comments

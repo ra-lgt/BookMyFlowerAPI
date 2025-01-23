@@ -79,8 +79,8 @@ async def get_cart_and_sales(from_timestamp:int=0,to_timestamp:int=0,interval_ty
 
 
 @app.get('/get_customer_review')
-async def get_customer_review(customer:TimeModal):
-    customer_review=customer_service.get_customer_review(customer.from_timestamp,customer.to_timestamp,customer.interval_type)
+async def get_customer_review(from_timestamp:int=0,to_timestamp:int=0,interval_type:str=""):
+    customer_review=customer_service.get_customer_review(from_timestamp,to_timestamp,interval_type)
     return customer_review
 
 
@@ -98,8 +98,11 @@ async def get_sales_and_revenue_stat(from_timestamp:int=0,to_timestamp:int=0,int
 
 @app.get('/get_sales_based_on_country_stats')
 async def get_sales_based_on_country_stats(from_timestamp:int=0,to_timestamp:int=0,interval_type:str=""):
-    sales_based_on_country_stats=sales_service.get_sales_based_on_country(from_timestamp,to_timestamp,interval_type)
-    return sales_based_on_country_stats
+    country_sales,state_sales=sales_service.get_sales_based_on_country(from_timestamp,to_timestamp,interval_type)
+    return {
+        'country_sales':country_sales,
+        'state_sales':state_sales
+    }
 
 
 @app.get('/get_sales_based_products')
