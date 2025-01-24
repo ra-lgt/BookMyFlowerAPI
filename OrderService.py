@@ -31,6 +31,12 @@ class OrderService(EnvirmentService):
                         page += 1
                 else:
                     return []
+            if ('included_keys' in params):
+                filtered_orders = []
+                for order in all_orders:
+                    filtered_order = {key: order[key] for key in params['included_keys'] if key in order}
+                    filtered_orders.append(filtered_order)
+                return filtered_orders
             return all_orders
 
           

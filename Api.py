@@ -34,24 +34,29 @@ class TimeModal(BaseModel):
 
 
 @app.get("/get_all_products")
-async def get_all_products(product: WooCommerce):
-    all_products = product_service.get_all_products_count_stat(product.params, product.interval_type)
+async def get_all_products(params:dict={},interval_type:str=""):
+    all_products = product_service.get_all_products_count_stat(params, interval_type)
     return all_products
 
 
-@app.get("/get_all_orders")
-async def get_all_orders(order: WooCommerce):
-    all_orders = order_service.get_orders_week_diff(order.params, order.interval_type)
+@app.get("/get_orders_week_diff")
+async def get_orders_week_diff(params:dict={},interval_type:str=""):
+    all_orders = order_service.get_orders_week_diff(params, interval_type)
+    return all_orders
+
+@app.post("/get_all_orders")
+async def get_all_orders(params:dict={},interval_type:str=""):
+    all_orders = order_service.get_all_orders(params, interval_type)
     return all_orders
 
 @app.get('/get_all_customers_stat')
-async def get_all_customers_stat(customer: WooCommerce):
-    all_customers = customer_service.get_all_customers_stat(customer.params, customer.interval_type)
+async def get_all_customers_stat(params:dict={},interval_type:str=""):
+    all_customers = customer_service.get_all_customers_stat(params, interval_type)
     return all_customers
 
 @app.get('/get_sales_cost_diff')
-async def get_sales_cost_diff(customer: WooCommerce):
-    sales_cost_diff = sales_service.get_sales_cost_diff(customer.params, customer.interval_type)
+async def get_sales_cost_diff(params:dict={},interval_type:str=""):
+    sales_cost_diff = sales_service.get_sales_cost_diff(params, interval_type)
     return sales_cost_diff
 
 @app.get('/get_all_category_based_sales')
@@ -112,6 +117,6 @@ async def  get_sales_based_products(from_timestamp:int=0,to_timestamp:int=0,sort
 
 
 @app.post('/get_product_details_using_id')
-async def get_product_details_using_id(product_id_list: List[int] = Body(...)):
-    product_details=product_service.get_product_details_using_id(product_id_list)
+async def get_product_details_using_id(product_id_list: List[int] = Body(...),included_keys:dict={}):
+    product_details=product_service.get_product_details_using_id(product_id_list,included_keys)
     return product_details
