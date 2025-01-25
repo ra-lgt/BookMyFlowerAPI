@@ -178,3 +178,26 @@ class SalesService(EnvirmentService):
             state_sales[sale['billing']['state']]+=float(sale['total'])
 
         return country_sales,state_sales
+    
+
+    def get_all_vendor_details(self):
+        page = 1
+        all_vendors = []
+
+        while True:
+            response = requests.get(self.urls['vendor_url'], headers=self.bearer_token_headers, params={"per_page": 100, "page": page})
+            
+            if response.status_code != 200:
+                print(f"Failed to fetch data. Status Code: {response.status_code}, Response: {response.text}")
+                break
+            
+            data = response.json()
+
+            all_vendors.extend(data)
+
+            if not data or len(data) < 100:
+                break
+
+            page += 1
+
+        return all_vendors

@@ -18,6 +18,10 @@ class EnvirmentService:
         self.db_password=os.getenv("DB_PASSWORD")
         self.db_name=os.getenv("DATABASE")
         self.utc_timezone = pytz.UTC
+        self.bearer_token_headers={
+            "Authorization": f"Bearer {os.getenv('BEARER_TOKEN')}",
+            "Content-Type": "application/json"
+        }
 
 
         self.connection = mysql.connector.connect(

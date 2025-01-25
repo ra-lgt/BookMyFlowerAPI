@@ -120,3 +120,9 @@ async def  get_sales_based_products(from_timestamp:int=0,to_timestamp:int=0,sort
 async def get_product_details_using_id(product_id_list: List[int] = Body(...),included_keys:dict={}):
     product_details=product_service.get_product_details_using_id(product_id_list,included_keys)
     return product_details
+
+
+@app.get('/get_all_vendors')
+async def get_all_vendors():
+    all_vendors=sales_service.get_all_vendor_details()
+    return all_vendors
