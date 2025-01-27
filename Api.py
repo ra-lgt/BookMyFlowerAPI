@@ -32,7 +32,6 @@ class TimeModal(BaseModel):
     to_timestamp:str="0"
     interval_type:str=""
 
-
 @app.get("/get_all_products")
 async def get_all_products(params:dict={},interval_type:str=""):
     all_products = product_service.get_all_products_count_stat(params, interval_type)
@@ -53,6 +52,34 @@ async def get_all_orders(params:dict={},interval_type:str=""):
 async def get_all_customers_stat(params:dict={},interval_type:str=""):
     all_customers = customer_service.get_all_customers_stat(params, interval_type)
     return all_customers
+
+@app.get('/get_all_customers')
+async def get_all_customers(params:dict={}):
+    all_customers = customer_service.get_all_customers(params)
+    return all_customers
+
+
+@app.get('/get_customer_details')
+async def get_customer_details(email:str=""):
+    email=email.strip()
+    customer_details=customer_service.get_customer_details(email=email)
+    user_id = next((i['user_id'] for i in customer_details if i['user_id'] is not None), -1)
+    customer_ids=[i['customer_id'] for i in customer_details]
+    all_order_data=order_service.get_all_orders()
+
+    all_order_data_filter = [
+    i for i in all_order_data
+    if (
+        i.get('customer_id') in customer_ids or
+        i.get('billing', {}).get('email', '').strip() == email or
+        i.get('shipping', {}).get('email', '').strip() == email
+    )
+]
+    cart_data=sales_service.get_sales_and_cart_stat(0,9999999999999999)
+
+
+    return customer_details
+
 
 @app.get('/get_sales_cost_diff')
 async def get_sales_cost_diff(params:dict={},interval_type:str=""):

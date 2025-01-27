@@ -93,3 +93,40 @@ class CustomerService(EnvirmentService):
         
         comments=cursor.fetchall()
         return comments
+    
+    def get_customer_details(self, email):
+        cursor = self.connection.cursor()
+        cursor.execute("""
+            SELECT 
+                wc_look.customer_id,
+                wc_look.username,
+                wc_look.first_name,
+                wc_look.last_name,
+                wc_look.email,
+                wc_look.date_registered,
+                wc_look.date_last_active,
+                wc_look.country,
+                wc_look.postcode,
+                wc_look.city,
+                wc_look.state,
+                wc_look.user_id,
+                comment.comment_author,
+                comment.comment_author_email,
+                comment.comment_date,
+                comment.comment_content,
+                comment.comment_approved
+            FROM wpbk_my_flowers24_wc_customer_lookup AS wc_look
+            LEFT JOIN wpbk_my_flowers24_comments AS comment
+            ON LOWER(wc_look.email) = LOWER(comment.comment_author_email)
+            WHERE wc_look.email=%s
+        """, (email,))
+
+        
+        rows = cursor.fetchall()
+        
+        column_names = [desc[0] for desc in cursor.description]
+        
+        customer_details = [dict(zip(column_names, row)) for row in rows]
+        
+        
+        return customer_details
