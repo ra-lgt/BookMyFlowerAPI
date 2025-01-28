@@ -75,10 +75,26 @@ async def get_customer_details(email:str=""):
         i.get('shipping', {}).get('email', '').strip() == email
     )
 ]
-    cart_data=sales_service.get_sales_and_cart_stat(0,9999999999999999)
+    cart_data=sales_service.get_sales_and_cart_stat(0,2147483647)
+
+    all_cart_data_filtered = [
+        i for i in cart_data
+        if any((int(j) in customer_ids or int(j)==user_id) for j in i.get('customer_id', []))
+    ]
+    included_keys={
+        "_fields": "name,date_created,stock_status,price,total_sales,images,store,average_rating",
+    }
+
+    for i in range(len(all_cart_data_filtered)):
+        product_details=product_service.get_product_details_using_id(product_id_list=all_cart_data_filtered[i]['products'],included_keys=included_keys)
+        all_cart_data_filtered[i]['product_details']=product_details
 
 
-    return customer_details
+    return {
+        'customer_details':customer_details,
+        'order_data':all_order_data_filter,
+        'cart_data':all_cart_data_filtered
+    }
 
 
 @app.get('/get_sales_cost_diff')

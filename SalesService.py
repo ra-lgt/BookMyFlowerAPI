@@ -22,7 +22,6 @@ class SalesService(EnvirmentService):
             current_params.update({
                 "page": page,
                 "per_page": 100,
-                "status":"completed"
             })
             if(url_type=="orders_url"):
                 sales_response = requests.get(self.urls['orders_url'], auth=self.auth, params=current_params)
@@ -57,6 +56,9 @@ class SalesService(EnvirmentService):
 
 
     def get_sales_cost_diff(self, params={}, interval_type=None):
+        params.update({
+            "status": "completed"
+        })
         
         current_week_total_cost = sum([float(order['total']) for order in self.get_all_sales(params)])
 
@@ -111,7 +113,7 @@ class SalesService(EnvirmentService):
         
     
 
-    def get_sales_and_cart_stat(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),interval_type="week"):
+    def get_sales_and_cart_stat(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),interval_type="week",only_cart=True):
         cursor = self.connection.cursor()
         cursor.execute("""SELECT session_key,session_value,created_at 
                        FROM wpbk_my_flowers24_woocommerce_sessions 
@@ -125,9 +127,12 @@ class SalesService(EnvirmentService):
             cart_mapping={
                 'product_count':len(products),
                 'products':products,
+                'customer_id':decrypted_text.get('customer',[]),
                 'timestamp':self.get_corresponding_type(timestamp=session[2],interval_type="date",kind="%Y-%m-%dT%H:%M")
             }
             cart_data.append(cart_mapping)
+        if(only_cart):
+            return cart_data
 
         all_sales=self.get_all_sales(params={
             "after":self.get_corresponding_type(from_timestamp,interval_type="date"),
@@ -140,7 +145,9 @@ class SalesService(EnvirmentService):
                 'total':sale['total'] if 'total' in sale else 0,
                 'products_id':[i['product_id'] for i in sale['line_items']],
                 'products_name':[i['name'] for i in sale['line_items']],
-                'product_prices':[i['total'] for i in sale['line_items']],                
+                'product_prices':[i['total'] for i in sale['line_items']], 
+                'customer_id':sale.get('customer_id',-1),          
+                'status':sale.get('status','')     
             }
             sales_data.append(sale_mapping)
         cursor.close()
@@ -151,7 +158,8 @@ class SalesService(EnvirmentService):
         params={
             "after":self.get_corresponding_type(from_timestamp,kind="%Y-%m-%d %H:%M:%S"),
             "before":self.get_corresponding_type(to_timestamp,kind="%Y-%m-%d %H:%M:%S"),
-            "interval":interval_type
+            "interval":interval_type,
+            'status':'completed'
         }
         all_sales_stat=self.get_all_sales(params=params,url_type="revenue_report")
 
@@ -162,7 +170,8 @@ class SalesService(EnvirmentService):
         params={
             "after":self.get_corresponding_type(from_timestamp,kind="%Y-%m-%d %H:%M:%S"),
             "before":self.get_corresponding_type(to_timestamp,kind="%Y-%m-%d %H:%M:%S"),
-            "interval":interval_type
+            "interval":interval_type,
+            'status':'completed'
         }
         all_sales=self.get_all_sales(params=params)
 
