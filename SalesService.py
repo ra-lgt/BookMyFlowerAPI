@@ -113,7 +113,7 @@ class SalesService(EnvirmentService):
         
     
 
-    def get_sales_and_cart_stat(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),interval_type="week",only_cart=True):
+    def get_sales_and_cart_stat(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),interval_type="week",only_cart=False):
         cursor = self.connection.cursor()
         cursor.execute("""SELECT session_key,session_value,created_at 
                        FROM wpbk_my_flowers24_woocommerce_sessions 

@@ -2,6 +2,7 @@ import requests
 from EnvirmentService import EnvirmentService
 from datetime import datetime, timedelta
 import time
+from passlib.hash import phpass
 
 class CustomerService(EnvirmentService):
     def __init__(self):
@@ -58,31 +59,27 @@ class CustomerService(EnvirmentService):
             # Request customers for last week
             last_week_response = self.get_all_customers(last_week_params)
 
-            if last_week_response.status_code == 200:
-                last_week_total = len(last_week_response.json())
-                percentage_change = (
-                    ((current_week_total - last_week_total) / last_week_total) * 100
-                    if last_week_total > 0 else None
-                )
 
-                return {
-                    "data": {
-                        "current_week_total": current_week_total,
-                        "last_week_total": last_week_total,
-                        "percentage_change": f"{percentage_change:+.2f}%" if percentage_change is not None else "N/A"
-                    },
-                    "status_code": 200
-                }
-            else:
-                return {
-                    "data": "Error retrieving last week data",
-                    "status_code": last_week_response.status_code
-                }
+            last_week_total = len(last_week_response)
+            percentage_change = (
+                ((current_week_total - last_week_total) / last_week_total) * 100
+                if last_week_total > 0 else None
+            )
 
-        return {
-            "data": [],
-            "status_code": 200
-        }
+            return {
+                "data": {
+                    "current_week_total": current_week_total,
+                    "last_week_total": last_week_total,
+                    "percentage_change": f"{percentage_change:+.2f}%" if percentage_change is not None else "N/A"
+                },
+                "status_code": 200
+            }
+        else:
+            return {
+                "data": "Error retrieving last week data",
+                "status_code": last_week_response
+            }
+
     
     def get_customer_review(self,from_timestamp=( int(time.time()) - (7 * 24 * 60 * 60)),to_timestamp=int(time.time()),interval_type="week"):
         cursor = self.connection.cursor()
@@ -130,3 +127,13 @@ class CustomerService(EnvirmentService):
         
         
         return customer_details
+    
+    def admin_signin(self,email,password):
+        cursor = self.connection.cursor()
+        cursor.execute("""SELECT user_login,user_pass FROM wpbk_my_flowers24_users WHERE user_email=%s""",(email,))
+        user=cursor.fetchone()
+        if user:
+            if phpass.verify(password,user[1]):
+                return {"status_code":200,"user_login":user[0]}
+            
+        return {"error":"Invalid email or password","status_code":401}

@@ -22,15 +22,20 @@ app.add_middleware(
     allow_headers=["*"], 
 )
 
-class WooCommerce(BaseModel):
-    params: dict = {}
-    interval_type: str | None = None
+
+class AdminSigninRequest(BaseModel):
+    email: str
+    password: str
 
 
 class TimeModal(BaseModel):
     from_timestamp:str="0"
     to_timestamp:str="0"
     interval_type:str=""
+@app.post("/admin_signin")
+async def admin_signin(data: AdminSigninRequest):
+    return customer_service.admin_signin(data.email,data.password)
+
 
 @app.get("/get_all_products")
 async def get_all_products(params:dict={},interval_type:str=""):
@@ -75,7 +80,7 @@ async def get_customer_details(email:str=""):
         i.get('shipping', {}).get('email', '').strip() == email
     )
 ]
-    cart_data=sales_service.get_sales_and_cart_stat(0,2147483647)
+    cart_data=sales_service.get_sales_and_cart_stat(0,2147483647,only_cart=True)
 
     all_cart_data_filtered = [
         i for i in cart_data
