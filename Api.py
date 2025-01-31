@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request,Body
+from fastapi import FastAPI, Request,Body,Form, File, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ProductService import ProductService
@@ -174,3 +174,26 @@ async def get_product_details_using_id(product_id_list: List[int] = Body(...),in
 async def get_all_vendors():
     all_vendors=sales_service.get_all_vendor_details()
     return all_vendors
+
+@app.post('/create_kanban_card')
+async def create_kanban_card(data:dict=Body(...)):
+    return sales_service.create_or_update_kanban_card(data)
+
+
+@app.post("/update_kanban_board")
+async def update_kanban(
+    title: str = Form(...),
+    due_date: str = Form(...),
+    label: str = Form(...),
+    comment: str = Form(...),
+    card_id: str = Form(...),
+    attachment: UploadFile = File(...)
+):
+    return await sales_service.update_kanban_board(kanban_details={
+        "card_title":title,
+        "due_date":due_date,
+        "label":label,
+        "comment":comment,
+        "card_id":card_id,  
+        "attachment":attachment
+    })

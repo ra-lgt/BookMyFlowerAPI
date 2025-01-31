@@ -5,7 +5,7 @@ from requests.auth import HTTPBasicAuth
 import time
 from Decryption import decrypt_php
 import pytz
-
+import base64
 class SalesService(EnvirmentService):
     def __init__(self):
         super().__init__()
@@ -210,3 +210,76 @@ class SalesService(EnvirmentService):
             page += 1
 
         return all_vendors
+    
+
+    def create_or_update_kanban_card(self, card_details):
+        cursor = self.connection.cursor()
+
+        cursor.execute("""
+            SELECT COUNT(*) FROM wpbk_my_flowers24_kanban_cards WHERE card_id = %s
+        """, (card_details.get('card_id', None),))
+
+        count = cursor.fetchone()[0]
+
+        if count > 0:
+            cursor.execute("""
+                UPDATE wpbk_my_flowers24_kanban_cards
+                SET board_name = %s, card_title = %s, due_date = %s, label = %s, comment = %s, attachment = %s
+                WHERE card_id = %s
+            """, (
+                card_details.get('board_name', None),
+                card_details.get('card_title', None),
+                card_details.get('due_date', None),
+                card_details.get('label', None),
+                card_details.get('comment', None),
+                card_details.get('attachment', None), 
+                card_details.get('card_id', None)
+            ))
+        else:
+            # Insert new card
+            cursor.execute("""
+                INSERT INTO wpbk_my_flowers24_kanban_cards (card_id, board_name, card_title, due_date, label, comment, attachment)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (
+                card_details.get('card_id', None),
+                card_details.get('board_name', None),
+                card_details.get('card_title', None),
+                card_details.get('due_date', None),
+                card_details.get('label', None),
+                card_details.get('comment', None),
+                card_details.get('attachment', None)  
+            ))
+
+        self.connection.commit()
+        cursor.close()
+
+        
+        return {"status_code": 200, "msg": "Card created successfully"}
+    
+
+    async def update_kanban_board(self,kanban_details):
+        cursor=self.connection.cursor()
+
+        attachment=kanban_details.get('attachment')
+
+        file_content=await attachment.read()
+
+        encoded_content = base64.b64encode(file_content).decode('utf-8')
+
+        cursor.execute("""
+                    UPDATE wpbk_my_flowers24_kanban_cards
+                       SET
+                        card_title = %s,
+                        due_date = %s,
+                        label = %s,
+                        comment = %s,
+                        attachment = %s
+                       """,(kanban_details.get('card_title'),kanban_details.get('due_date'),kanban_details.get('label'),kanban_details.get('comment'),encoded_content))
+        
+        self.connection.commit()
+        self.connection.close()
+        return {"status_code": 200, "msg": "Card updated successfully"}
+
+
+
+
