@@ -197,3 +197,6 @@ async def update_kanban(
         "card_id":card_id,  
         "attachment":attachment
     })
+@app.get('/get_kanban_data')
+async def get_kanban_data():
+    return sales_service.kanban_board_data()

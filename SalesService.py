@@ -279,6 +279,42 @@ class SalesService(EnvirmentService):
         self.connection.commit()
         self.connection.close()
         return {"status_code": 200, "msg": "Card updated successfully"}
+    
+
+    def kanban_board_data(self):
+        cursor = self.connection.cursor()
+        cursor.execute("""
+            SELECT * FROM wpbk_my_flowers24_kanban_cards
+        """)
+
+        columns = [desc[0] for desc in cursor.description]  # Get column names
+        kanban_data = []
+
+        for row in cursor.fetchall():
+            row_dict = dict(zip(columns, row))
+            formatted_data = {
+                "id": row_dict.get("board_name", ""),
+                "title": row_dict.get("board_name",""),  # Ignored, as per your request
+                "item": [
+                    {
+                        "id": row_dict.get("card_id", ""),
+                        "title": row_dict.get("card_title", ""),
+                        "comments": row_dict.get("comment", ""),
+                        "badge-text": row_dict.get("label", ""),
+                        "badge": "success",
+                        "due-date": row_dict.get("due_date", ""),
+                        "image": row_dict.get("attachment", ""),
+                        "assigned": row_dict.get("assigned", "").split(","),  # Assuming CSV format
+                        "members": row_dict.get("members", "").split(",")  # Assuming CSV format
+                    }
+                ]
+            }
+            kanban_data.append(formatted_data)
+
+        cursor.close()
+
+
+        return kanban_data
 
 
 
