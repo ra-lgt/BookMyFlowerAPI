@@ -102,12 +102,11 @@ class SalesService(EnvirmentService):
         for order in sales_list:
             for item in order["line_items"]:
                 product_id = item["product_id"]
-                total = float(item["total"])
                 categories = product_category_map.get(product_id, [])
                 for category in categories:
                     if category not in category_sales:
                         category_sales[category] = 0
-                    category_sales[category] += total
+                    category_sales[category] += 1
 
         return category_sales
         
@@ -292,23 +291,25 @@ class SalesService(EnvirmentService):
 
         for row in cursor.fetchall():
             row_dict = dict(zip(columns, row))
+            
             formatted_data = {
-                "id": row_dict.get("board_name", ""),
-                "title": row_dict.get("board_name",""),  # Ignored, as per your request
+                "id": row_dict.get("board_name", " ") or " ",
+                "title": row_dict.get("board_name", " ") or " ",
                 "item": [
                     {
-                        "id": row_dict.get("card_id", ""),
-                        "title": row_dict.get("card_title", ""),
-                        "comments": row_dict.get("comment", ""),
-                        "badge-text": row_dict.get("label", ""),
+                        "id": row_dict.get("card_id", " ") or " ",
+                        "title": row_dict.get("card_title", " ") or " ",
+                        "comments": row_dict.get("comment", " ") or " ",
+                        "badge-text": row_dict.get("label", " ") or " ",
                         "badge": "success",
-                        "due-date": row_dict.get("due_date", ""),
-                        "image": row_dict.get("attachment", ""),
-                        "assigned": row_dict.get("assigned", "").split(","),  # Assuming CSV format
-                        "members": row_dict.get("members", "").split(",")  # Assuming CSV format
+                        "due-date": row_dict.get("due_date", " ") or " ",
+                        "image": row_dict.get("attachment", " ") or " ",
+                        "assigned": (row_dict.get("assigned") or "").split(","),  
+                        "members": (row_dict.get("members") or "").split(",")  
                     }
                 ]
             }
+            
             kanban_data.append(formatted_data)
 
         cursor.close()

@@ -110,7 +110,7 @@ async def get_sales_cost_diff(params:dict={},interval_type:str=""):
 @app.get('/get_all_category_based_sales')
 async def get_all_category_based_sales():
     all_products=product_service.get_all_products()
-    all_sales=sales_service.get_all_sales()
+    all_sales=sales_service.get_all_sales(params={"status":"completed"})
 
     category_based_sales=sales_service.get_category_sales(all_products,all_sales)
     return category_based_sales
