@@ -200,3 +200,7 @@ async def update_kanban(
 @app.get('/get_kanban_data')
 async def get_kanban_data():
     return sales_service.kanban_board_data()
+
+@app.get('/get_contacts_details')
+async def get_contacts_details():
+    return customer_service.get_contacts_details()

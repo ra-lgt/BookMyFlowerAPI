@@ -27,7 +27,6 @@ class CustomerService(EnvirmentService):
 
                 # Check headers for pagination details
                 total_pages = int(response.headers.get('X-WP-TotalPages', 1))
-                print(f"Page {page} - Total Customers: {response.headers.get('X-WP-Total')}, Total Pages: {total_pages}")
 
                 # If we have fetched all the pages, break the loop
                 if page >= total_pages:
@@ -137,3 +136,15 @@ class CustomerService(EnvirmentService):
                 return {"status_code":200,"user_login":user[0]}
             
         return {"error":"Invalid email or password","status_code":401}
+    
+
+    def get_contacts_details(self):
+        cursor=self.connection.cursor()
+        cursor.execute("""
+                       SELECT ID,post_author,post_date,post_content,post_type FROM wpbk_my_flowers24_posts
+                       WHERE post_type='flamingo_inbound'
+                       """)
+        contacts=cursor.fetchall()
+        column_names = [desc[0] for desc in cursor.description]
+        contact_details = [dict(zip(column_names, row)) for row in contacts]
+        return contact_details

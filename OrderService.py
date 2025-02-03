@@ -23,7 +23,6 @@ class OrderService(EnvirmentService):
                     all_orders.extend(orders)
 
                     total_pages = int(response.headers.get('X-WP-TotalPages', 1))
-                    print(f"Page {page} - Total Orders: {response.headers.get('X-WP-Total')}, Total Pages: {total_pages}")
 
                     if page >= total_pages:
                         break
