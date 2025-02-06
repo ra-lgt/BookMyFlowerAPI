@@ -76,3 +76,15 @@ class ProductService(EnvirmentService):
             
         product_details=self.get_all_products(params)
         return product_details
+    
+    def check_products_for_alerts(self):
+        all_products=self.get_all_products()
+        store_details={}
+        for product in all_products:
+            if((product['stock_quantity']!=None and product['stock_quantity']<=10) or product['stock_status']=="outofstock"):
+                store_id=product.get('store',{}).get('id')
+                if(store_id not in store_details):
+                    store_details[store_id]=[]
+                store_details[store_id].append(product)
+                
+        return store_details

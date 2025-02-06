@@ -5,5 +5,6 @@
     "views_url": "https://bookmyflowers.co/wp-json/jetpack/v4/stats",
     "sales_url": "https://bookmyflowers.co/wp-json/wc/v3/reports/sales",
     "revenue_report":"https://bookmyflowers.co/wp-json/wc-analytics/reports/revenue/stats",
-    "vendor_url":"https://bookmyflowers.co/wp-json/dokan/v1/stores"
+    "vendor_url":"https://bookmyflowers.co/wp-json/dokan/v1/stores",
+    "store_url": "https://bookmyflowers.co/wp-json/wc/v3/customers"
 }

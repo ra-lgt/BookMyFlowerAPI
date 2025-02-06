@@ -204,3 +204,65 @@ async def get_kanban_data():
 @app.get('/get_contacts_details')
 async def get_contacts_details():
     return customer_service.get_contacts_details()
+
+@app.get('/get_all_notifications')
+async def get_all_notifications():
+    return sales_service.get_all_notifications()
+
+
+@app.post('/update_notification_status_as_read')
+async def update_notification_status_as_read(notification_id:int=0):
+    return sales_service.update_notification_status_as_read(notification_id)
+
+
+@app.get('/check_products_for_alerts')
+async def check_products_for_alerts():
+    all_products= product_service.get_all_products()
+
+
+    all_alerts=sales_service.get_all_alert_config()
+
+    all_alerts_title=[i.get('alert_select') for i in all_alerts]
+
+    for product in all_products:
+        if('less_product_count_10' in all_alerts_title):
+            if((product['stock_quantity']!=None and product['stock_quantity']<=10) or product['stock_status']=="outofstock"):
+                sales_service.send_mail_alert(product,[i for i in all_alerts if i.get('alert_select')=="less_product_count_10"][0],"less_product_count_10")
+        
+        elif('out_of_stock' in all_alerts_title):
+            if(product['stock_status']=="outofstock"):
+                sales_service.send_mail_alert(product,[i for i in all_alerts if i.get('alert_select')=="out_of_stock"][0],"out_of_stock")
+
+        
+
+
+
+
+
+
+
+    print()
+
+
+@app.post('/post_alert_mail_config')
+async def post_alert_mail_config(
+    sender_email: str = Form(...),
+    sender_password: str = Form(...),
+    alert_select: str = Form(...),
+    email_subject: str = Form(...),
+    body_content: str = Form(...)
+):
+    # print(sender_password)
+    return sales_service.post_alert_mail_config({
+        "sender_email":sender_email,
+        "sender_password":sender_password,
+        "alert_select":alert_select,
+        "email_subject":email_subject,
+        "body_content":body_content
+    })
+
+
+@app.get('/get_all_alert_config')
+async def get_all_alert_config():
+    all_mail_template=sales_service.get_all_alert_config()
+    return all_mail_template

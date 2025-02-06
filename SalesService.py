@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 from requests.auth import HTTPBasicAuth
 import time
 from Decryption import decrypt_php
-import pytz
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import base64
 class SalesService(EnvirmentService):
     def __init__(self):
@@ -211,6 +213,11 @@ class SalesService(EnvirmentService):
         return all_vendors
     
 
+    def get_store_details_using_id(self,store_id):
+        response = requests.get(f"{self.urls['store_url']}/{store_id}", auth=self.auth)
+        return response.json()
+    
+
     def create_or_update_kanban_card(self, card_details):
         cursor = self.connection.cursor()
 
@@ -316,6 +323,111 @@ class SalesService(EnvirmentService):
 
 
         return kanban_data
+    
+    def get_all_notifications(self):
+        cursor = self.connection.cursor()
+        cursor.execute("""
+            SELECT * FROM wpbk_my_flowers24_notifications
+            WHERE is_viewed = 0
+        """)
+        notifications = cursor.fetchall()
+        columns = [desc[0] for desc in cursor.description]
+        notification_data = []
+        for row in notifications:
+            row_dict = dict(zip(columns, row))
+            notification_data.append(row_dict)
+        cursor.close()
+        return notification_data
+    
+
+    def update_notification_status_as_read(self,notification_id):
+        cursor = self.connection.cursor()
+        cursor.execute("""
+            UPDATE wpbk_my_flowers24_notifications
+            SET is_viewed = 1
+            WHERE id = %s
+        """, (notification_id,))
+        self.connection.commit()
+        cursor.close()
+        return {"status_code": 200, "msg": "Notification updated successfully"}
+    
+
+    def post_alert_mail_config(self, data):
+        cursor = self.connection.cursor()
+
+        query = """
+        INSERT INTO wpbk_my_flowers24_email_alerts (sender_email, sender_password, alert_select, email_subject, body_content)
+        VALUES (%s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE 
+            sender_email = VALUES(sender_email),
+            sender_password = VALUES(sender_password),
+            email_subject = VALUES(email_subject),
+            body_content = VALUES(body_content)
+        """
+
+        values = (
+            data.get("sender_email"),
+            data.get("sender_password"),  
+            data.get("alert_select"),
+            data.get("email_subject"),
+            data.get("body_content")
+        )
+
+        try:
+            cursor.execute(query, values)
+            self.connection.commit()  
+            return {"status": "success", "message": "Alert mail config saved or updated", "affected_rows": cursor.rowcount}
+        except Exception as e:
+            self.connection.rollback()  
+            return {"status": "error", "message": str(e)}
+        finally:
+            cursor.close()
+
+
+
+    def get_all_alert_config(self):
+        cursor=self.connection.cursor()
+        cursor.execute("""
+                        SELECT * FROM wpbk_my_flowers24_email_alerts
+                        """)
+        alert_config=cursor.fetchall()
+        cursor.close()
+        column_names = [desc[0] for desc in cursor.description]
+        alert_config = [dict(zip(column_names, row)) for row in alert_config]
+        return alert_config
+    
+
+    def get_details_for_vendor_id(self,vendor_id):
+        response = requests.get(f"{self.urls['store_url']}/{vendor_id}", auth=self.auth)
+        return response.json()
+    
+
+    def send_mail_alert(self,product,alter_dict,alert_type):
+        alter_dict['body_content']=alter_dict['body_content'].format(
+            product_name = product.get('name'),
+            product_stock_quantity = product.get('stock_quantity'),
+            product_stock_status = product.get('stock_status'),
+            product_image = f'<img src="{(product.get("images") or [{}])[0].get("src")}" />'
+
+
+        )
+        vendor_details=self.get_details_for_vendor_id(product.get('store',{}).get('id',""))
+        email=vendor_details.get('email')
+
+        message = MIMEMultipart('alternative')
+        message['Subject'] = alter_dict.get('email_subject')
+        message["From"] = alter_dict.get('sender_email')
+        message["To"] = email
+
+        html_mail = MIMEText(alter_dict.get('body_content',''), 'html')
+        message.attach(html_mail)
+
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        server.login(alter_dict.get('sender_email'), alter_dict.get('sender_password'))
+        server.sendmail(alter_dict.get('sender_email'), email, message.as_string())
+        server.quit()
+
+        print("Mail sent")
 
 
 
