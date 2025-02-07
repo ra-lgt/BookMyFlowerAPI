@@ -32,6 +32,11 @@ class TimeModal(BaseModel):
     from_timestamp:str="0"
     to_timestamp:str="0"
     interval_type:str=""
+
+class NotificationUpdateRequest(BaseModel):
+    notification_ids: List[int]
+
+    
 @app.post("/admin_signin")
 async def admin_signin(data: AdminSigninRequest):
     return customer_service.admin_signin(data.email,data.password)
@@ -211,8 +216,10 @@ async def get_all_notifications():
 
 
 @app.post('/update_notification_status_as_read')
-async def update_notification_status_as_read(notification_id:int=0):
-    return sales_service.update_notification_status_as_read(notification_id)
+async def update_notification_status_as_read(request: NotificationUpdateRequest):
+    request=request.dict()
+    notification_ids=request.get('notification_ids')
+    return sales_service.update_notification_status_as_read(notification_ids)
 
 
 @app.get('/check_products_for_alerts')
@@ -232,16 +239,10 @@ async def check_products_for_alerts():
         elif('out_of_stock' in all_alerts_title):
             if(product['stock_status']=="outofstock"):
                 sales_service.send_mail_alert(product,[i for i in all_alerts if i.get('alert_select')=="out_of_stock"][0],"out_of_stock")
-
-        
-
-
-
-
-
-
-
-    print()
+    
+    return {
+        "status":"success"
+    }
 
 
 @app.post('/post_alert_mail_config')

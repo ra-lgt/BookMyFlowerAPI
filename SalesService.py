@@ -342,11 +342,12 @@ class SalesService(EnvirmentService):
 
     def update_notification_status_as_read(self,notification_id):
         cursor = self.connection.cursor()
-        cursor.execute("""
+        query = """
             UPDATE wpbk_my_flowers24_notifications
             SET is_viewed = 1
-            WHERE id = %s
-        """, (notification_id,))
+            WHERE id IN ({})
+        """.format(",".join(["%s"] * len(notification_id)))
+        cursor.execute(query, notification_id)
         self.connection.commit()
         cursor.close()
         return {"status_code": 200, "msg": "Notification updated successfully"}
