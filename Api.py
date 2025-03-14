@@ -7,8 +7,9 @@ from OrderService import OrderService
 from CustomerService import CustomerService
 from SalesService import SalesService
 from typing import List
+from mangum import Mangum
 app = FastAPI()
-
+handler = Mangum(app)
 product_service = ProductService()
 order_service = OrderService()
 customer_service = CustomerService()
